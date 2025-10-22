@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharosHub Clone - Track Testnet Points & Rank</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f4f4f4; }
+        .header { text-align: center; color: #333; }
+        .invite-btn { background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin: 10px 0; text-decoration: none; display: inline-block; }
+        .invite-btn:hover { background: #218838; }
+        .form { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        input[type="text"] { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .results { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; display: none; }
+        .loading { color: #007bff; }
+        .error { color: #dc3545; }
+        .footer { text-align: center; margin-top: 40px; color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 PharosHub Clone</h1>
+        <p>Check your Pharos testnet rank instantly! Track points, level progress & compete on leaderboard. Free tool to maximize your airdrop potential.</p>
+        <a href="https://testnet.pharosnetwork.xyz/experience?inviteCode=o3oAgbepRIWGfgBR" class="invite-btn" target="_blank">🎁 Join Pharos Testnet (Your Invite Link)</a>
+    </div>
+
+    <div class="form">
+        <h2>Enter Your Wallet Address</h2>
+        <input type="text" id="wallet" placeholder="e.g., 0x1234...abcd" required>
+        <button id="checkBtn" onclick="checkPoints()">Check Points</button>
+    </div>
+
+    <div class="results" id="results">
+        <h3>Your Stats:</h3>
+        <p><strong>Points:</strong> <span id="points">Loading...</span></p>
+        <p><strong>Level:</strong> <span id="level">Loading...</span></p>
+        <p><strong>Rank:</strong> <span id="rank">Loading...</span></p>
+        <p id="activities"><strong>Recent Activities:</strong> Recent activities may take up to 60 minutes to appear.</p>
+        <div id="errorMsg" class="error" style="display: none;"></div>
+    </div>
+
+    <div class="footer">
+        Created by <a href="https://twitter.com/huos119">@huos119</a> | Powered by Pharos Network
+    </div>
+
+    <script>
+        async function checkPoints() {
+            const wallet = document.getElementById('wallet').value.trim();
+            const btn = document.getElementById('checkBtn');
+            const results = document.getElementById('results');
+            const pointsEl = document.getElementById('points');
+            const levelEl = document.getElementById('level');
+            const rankEl = document.getElementById('rank');
+            const errorEl = document.getElementById('errorMsg');
+
+            if (!wallet) {
+                alert('Please enter a wallet address!');
+                return;
+            }
+
+            // Reset UI
+            btn.disabled = true;
+            btn.textContent = 'Checking...';
+            results.style.display = 'block';
+            pointsEl.textContent = 'Loading...';
+            levelEl.textContent = 'Loading...';
+            rankEl.textContent = 'Loading...';
+            errorEl.style.display = 'none';
+            pointsEl.className = 'loading';
+
+            try {
+                // 假设的API端点 - 根据Pharos文档调整URL和参数
+                // 示例响应: { points: 1250, level: 'Silver', rank: 5432, totalUsers: 530446 }
+                const response = await fetch(`https://api.pharosnetwork.xyz/v1/user/stats?address=${encodeURIComponent(wallet)}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // 如果需要API密钥，添加: 'Authorization': 'Bearer YOUR_KEY'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                // 更新UI基于响应
+                pointsEl.textContent = data.points || '0';
+                pointsEl.className = '';
+                levelEl.textContent = data.level || 'Bronze';
+                rankEl.textContent = `#${data.rank || 'N/A'} out of ${data.totalUsers || 'N/A'}`;
+                
+                // 可选：显示最近活动
+                if (data.activities && data.activities.length > 0) {
+                    document.getElementById('activities').innerHTML += '<br><ul>' + 
+                        data.activities.map(act => `<li>${act.description} (${act.timestamp})</li>`).join('') + 
+                        '</ul>';
+                }
+
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+                pointsEl.textContent = 'Error';
+                levelEl.textContent = 'Error';
+                rankEl.textContent = 'Error';
+                pointsEl.className = 'error';
+                errorEl.textContent = `Failed to fetch data: ${error.message}. Try checking via Discord bot (/testnetinfo ${wallet}).`;
+                errorEl.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Check Points';
+            }
+        }
+
+        // 可选：回车键提交
+        document.getElementById('wallet').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPoints();
+            }
+        });
+    </script>
+</body>
+</html>
